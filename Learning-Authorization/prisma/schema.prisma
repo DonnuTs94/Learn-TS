@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Author {
+  id         Int      @id @default(autoincrement())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  books Book[]
+
+  @@map("authors")
+}
+
+model Category {
+  id         Int      @id @default(autoincrement())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  books BookCategory[]
+
+  @@map("categories")
+}
+
+model Publisher {
+  id         Int      @id @default(autoincrement())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  books Book[]
+
+  @@map("publishers")
+}
+
+model Book {
+  id           Int      @id @default(autoincrement())
+  title        String
+  isbn         String   @unique
+  synopsis     String?
+  author_id    Int
+  publisher_id Int
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  author     Author         @relation(fields: [author_id], references: [id])
+  publisher  Publisher      @relation(fields: [publisher_id], references: [id])
+  categories BookCategory[]
+
+  @@map("books")
+}
+
+model BookCategory {
+  book_id     Int
+  category_id Int
+
+  Category Category @relation(fields: [category_id], references: [id])
+  Book     Book     @relation(fields: [book_id], references: [id])
+
+  @@id([book_id, category_id])
+  @@map("book_category")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  password   String
+  is_blocked Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  token  Token[]
+  Role   Role?   @relation(fields: [roleId], references: [id])
+  roleId Int?
+
+  @@map("users")
+}
+
+model Role {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user       User[]
+  permission PermissionRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id         Int      @id @default(autoincrement())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  permission PermissionRole[]
+
+  @@map("permissions")
+}
+
+model PermissionRole {
+  Role         Role        @relation(fields: [roleId], references: [id])
+  roleId       Int
+  Permission   Permission? @relation(fields: [permissionId], references: [id])
+  permissionId Int
+
+  @@id([roleId, permissionId])
+  @@map("permission_role")
+}
+
+model Token {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique
+  expired_at DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  userId Int?
+  User   User? @relation(fields: [userId], references: [id])
+
+  @@map("tokens")
+}
