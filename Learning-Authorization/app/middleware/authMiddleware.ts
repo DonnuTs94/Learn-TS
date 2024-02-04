@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { Prisma, PrismaClient } from "@prisma/client"
 import { Request, Response, NextFunction } from "express"
 import { IValidateAuth } from "../interfaces/authInterface"
 
@@ -82,4 +82,35 @@ export const verifyToken = async (
   req.user = checkTokenExist.User || undefined
 
   next()
+}
+
+export const authorizePermission = (permission: string) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(400).json({
+        message: "Unauthorized",
+      })
+    }
+
+    const permissionRecord = await prisma.permissionRole.findMany({
+      where: {
+        roleId: Number(req.user.roleId),
+      },
+      include: {
+        Permission: true,
+      },
+    })
+
+    const permissions = permissionRecord.map(
+      (record) => record.Permission?.name
+    )
+
+    if (!permissions.includes(permission)) {
+      return res.status(403).json({
+        message: "Forbidden",
+      })
+    }
+
+    next()
+  }
 }

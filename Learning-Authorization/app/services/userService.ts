@@ -14,6 +14,7 @@ export const createUser = async (
       name,
       email,
       password: hashPassword,
+      roleId: 1,
     },
   })
 }

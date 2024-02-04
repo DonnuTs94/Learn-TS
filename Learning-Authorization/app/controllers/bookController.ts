@@ -12,6 +12,17 @@ const booksController = {
       })
     }
   },
+  createBook: async (req: Request, res: Response) => {
+    try {
+      return res.status(200).json({
+        message: "Success add new book!",
+      })
+    } catch (err: any) {
+      return res.status(500).json({
+        message: err.message,
+      })
+    }
+  },
 }
 
 export default booksController
