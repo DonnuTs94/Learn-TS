@@ -1,9 +1,14 @@
 import { Request, Response } from "express"
 import bcrypt from "bcrypt"
 import randomString from "randomstring"
+import fs from "fs"
+import handlebars from "handlebars"
 
 import { IUserForm, IValidateAuth } from "../interfaces/authInterface"
 import { createToken, createUser, findEmail } from "../services/userService"
+import { sendMessageToQueue } from "../services/rabbitmq"
+import { consumeMessages } from "../services/consumer"
+import { emailer } from "../lib/emailer"
 
 const authController = {
   register: async (req: Request, res: Response) => {
@@ -12,10 +17,35 @@ const authController = {
 
       await createUser(name, email, password)
 
+      const rawHtml = fs.readFileSync("templates/sendOtp.html", "utf-8")
+      const compiledHTML = handlebars.compile(rawHtml)
+      const htmlResult = compiledHTML({
+        name,
+      })
+
+      await emailer({
+        to: email,
+        html: htmlResult,
+        subject: "Hello from Rabbit",
+      })
+
+      // const emailData = {
+      //   to: email,
+      //   subject: "Hello From Rabbit And NodeMailer",
+      //   html: htmlResult,
+      // }
+
+      // sendMessageToQueue(emailData)
+
+      // consumeMessages().catch((err: Error) => {
+      //   console.error("Error consuming message:", err)
+      // })
+
       return res.status(200).json({
         message: "Success register new user!",
       })
     } catch (err: any) {
+      console.log(err)
       return res.status(500).json({
         message: err.message,
       })
